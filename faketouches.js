@@ -363,6 +363,32 @@
         }, 5);
     };
 
+    Gestures.Drag = function(callback, from, distance, duration, interval){
+        interval = interval || 10;
+        duration = duration || 250;
+        var self = this;
+        self.setTouches([
+            [from.x, from.y]
+        ]);
+        self.triggerStart();
+        var totalMoves = duration / interval;
+        var dx = distance.dx / totalMoves;
+        var dy = distance.dy / totalMoves;
+        var moves = 0;
+        var inter = setInterval(function() {
+            if(moves >= totalMoves) {
+                self.triggerEnd();
+                clearInterval(inter);
+                if(callback) {
+                    callback();
+                }
+                return;
+            }
+            self.moveBy(dx, dy);
+            moves++;
+        }, interval);
+    };
+
     Gestures.PinchOut = function(callback) {
         var self = this;
         self.setTouches([
@@ -455,7 +481,10 @@
     };
 
     FakeTouches.prototype.triggerGesture = function(name, callback) {
-        FakeTouches.Gestures[name].call(this, callback);
+        if(typeof FakeTouches.Gestures[name] === 'undefined'){
+            throw new Error("Unknown Gesture:"+name);
+        }
+        FakeTouches.Gestures[name].apply(this, Array.prototype.slice.call(arguments).slice(1));
     };
 
     FakeTouches.Gestures = Gestures;
